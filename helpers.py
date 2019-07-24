@@ -131,8 +131,8 @@ def get_table_values(x, y):
     noise = get_noise_PC(x, y)
     NULL = get_null_axis(x, y)
     LDA = get_LDA_axis(x, y)
-    null_vs_noise = np.dot(NULL, noise)
-    LDA_vs_noise = np.dot(LDA, noise)
+    null_vs_noise = abs(np.dot(NULL, noise))
+    LDA_vs_noise = abs(np.dot(LDA, noise))
     rsc = get_rsc(x, y)
 
     return [dprime_pop, dprime_ind, ratio, null_vs_noise, LDA_vs_noise, rsc]
