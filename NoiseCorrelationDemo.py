@@ -56,17 +56,17 @@ NULL_y = [x.mean(axis=0)[1], y.mean(axis=0)[1]]
 NULL_source = ColumnDataSource(dict(x=NULL_x, y=NULL_y))
 
 uall = np.concatenate((x, y), axis=0).mean(axis=0)
-LDA_x = [uall[0]-LDA[0], uall[1]+LDA[0]]
+LDA_x = [uall[0]-LDA[0], uall[0]+LDA[0]]
 LDA_y = [uall[1]-LDA[1], uall[1]+LDA[1]]
 LDA_source = ColumnDataSource(dict(x=LDA_x, y=LDA_y))
 
-noise_source = ColumnDataSource(dict(x=x, y=y))
+noise_x = [uall[0]-noise[0], uall[0]+noise[0]]
+noise_y = [uall[1]-noise[1], uall[1]+noise[1]]
+noise_source = ColumnDataSource(dict(x=noise_x, y=noise_y))
 
-glyph = Line(x="x", y="y", line_color="black", line_width=3)
-p.add_glyph(NULL_source, glyph)
-glyph = Line(x="x", y="y", line_color="gold", line_width=3)
-p.add_glyph(LDA_source, glyph)
-
+p.line(x="x", y="y", line_color="black", line_width=3, legend='NULL axis', source=NULL_source)
+p.line(x="x", y="y", line_color="gold", line_width=3, legend='LDA axis', source=LDA_source)
+p.line(x="x", y="y", line_color="purple", line_width=3, legend='noise axis', source=noise_source)
 # set up widgets for editing means / covariance
 # Set up widgets
 covariance = Slider(title="covariance", value=0.0, start=-1.0, end=1.0, step=0.01)
@@ -90,13 +90,16 @@ def update_axes(x, y):
     NULL_y = [x.mean(axis=0)[1], y.mean(axis=0)[1]]
     LDA *= (np.linalg.norm([[x.mean(axis=0)[0], y.mean(axis=0)[0]],
                             [x.mean(axis=0)[1], y.mean(axis=0)[1]]])/2)
+    noise *= (np.linalg.norm([[x.mean(axis=0)[0], y.mean(axis=0)[0]],
+                            [x.mean(axis=0)[1], y.mean(axis=0)[1]]])/2)
     uall = np.concatenate((x, y), axis=0).mean(axis=0)
-    LDA_x = [uall[0]-LDA[0], uall[1]+LDA[0]]
+    LDA_x = [uall[0]-LDA[0], uall[0]+LDA[0]]
     LDA_y = [uall[1]-LDA[1], uall[1]+LDA[1]]
+    noise_x = [uall[0]-noise[0], uall[0]+noise[0]]
+    noise_y = [uall[1]-noise[1], uall[1]+noise[1]]
     NULL_source.data = dict(x=NULL_x, y=NULL_y)
     LDA_source.data = dict(x=LDA_x, y=LDA_y)
-
-    #noise_source = ColumnDataSource(dict(x=x, y=y))
+    noise_source.data = dict(x=noise_x, y=noise_y)
 
 def update_data(attrname, old, new):
     x = covariance.value
