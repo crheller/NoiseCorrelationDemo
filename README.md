@@ -1,6 +1,6 @@
 # NoiseCorrelationDemo
 
-![alt text](https://github.com/crheller/NoiseCorrelationDemo/sample_image.png)
+![alt text](https://github.com/crheller/NoiseCorrelationDemo/blob/master/sample_image.png)
 
 Simple app to explore how different pairwise correlation structure affects optimal linear decoding of two signals.
 
