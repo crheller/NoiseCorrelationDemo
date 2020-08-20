@@ -15,6 +15,7 @@ def get_null_axis(x, y):
     x and y must be of dimensions: O x N, where O are observations and N are
     number of dimensions. For example, this could be trials x neurons
     '''
+    x, y = normalize_variance(x, y)
     ux = x.mean(axis=0)
     uy = y.mean(axis=0)
 
@@ -56,6 +57,7 @@ def get_LDA_axis(x, y):
     x and y must be of dimensions: O x N, where O are observations and N are
     number of dimensions. For example, this could be trials x neurons
     '''
+    x, y = normalize_variance(x, y)
     n_classes = 2
     n_dims = x.shape[-1]
     if x.shape[0] != y.shape[0]:
@@ -111,23 +113,77 @@ def get_LDA_axis(x, y):
 
     return discrimination_axis
 
+
+'''
+def normalize_variance(x, y):
+    """
+    Normalize such that denominator of dprime calculation goes
+    to 1
+    """
+    s1 = x.copy()
+    s2 = y.copy()
+
+    norm_factor = np.sqrt(0.5 * (np.var(s1) + np.var(s2)))
+
+    if (np.std(s1) != 0) | (np.std(s2) != 0):
+        if len(x.shape) == 1:
+            norm_factor = np.sqrt(0.5 * (np.var(s1) + np.var(s2)))
+            s1 = s1 / norm_factor
+            s2 = s2 / norm_factor
+        else:
+            for n in range(0, x.shape[-1]):
+                if (np.std(s1[:, n]) != 0) | (np.std(s2[:, n]) != 0):
+                    norm_factor = np.sqrt(0.5 * (np.var(s1[:, n]) + np.var(s2[:, n])))
+                    s1[:, n] = s1[:, n] / norm_factor
+                    s2[:, n] = s2[:, n] / norm_factor
+    
+    return s1, s2
+
+def normalize_variance(x, y):
+    """
+    Normalize by the variance of each stimulus, for each neurons,
+    so that var(neuron1) = var(neuron2)
+    """
+    s1 = x.copy()
+    s2 = y.copy()
+    if len(x.shape) == 1:
+        s1 = s1 / np.std(s1)
+        s2 = s2 / np.std(s2)
+    else:
+        for n in range(0, x.shape[-1]):
+            s1[:, n] = s1[:, n] / np.std(s1[:, n])
+            s2[:, n] = s2[:, n] / np.std(s2[:, n])
+    
+    return s1, s2
+'''
+
+
 def get_dprime(x, y):
     if len(x.shape) == 1:
-        dprime = abs(x.mean() - y.mean()) / (0.5 * (np.var(x) + np.var(y)))
+        dprime = abs(x.mean() - y.mean()) / (np.sqrt((np.var(x) + np.var(y)) / 2))
+        return dprime
     else:
-        ax = get_LDA_axis(x, y)
-        s1 = np.matmul(x, ax)
-        s2 = np.matmul(y, ax)
-        dprime = abs(s1.mean() - s2.mean()) / (0.5 * (np.var(s1) + np.var(s2)))
-    return dprime
+        ax1 = get_LDA_axis(x, y)
+        ax2 = get_null_axis(x, y)
+        s1 = np.matmul(x, ax1)
+        s2 = np.matmul(y, ax1)
+        dprime_LDA = abs(s1.mean() - s2.mean()) / (np.sqrt((np.var(s1) + np.var(s2)) / 2))
 
-def get_table_values(x, y):
+        s1 = np.matmul(x, ax2)
+        s2 = np.matmul(y, ax2)
+        dprime_NULL = abs(s1.mean() - s2.mean()) / (np.sqrt((np.var(s1) + np.var(s2)) / 2))
+
+        return dprime_LDA, dprime_NULL
+
+def get_table_values(_x, _y):
     """
     Return a list of table values for the given dataset
     """
-    dprime_pop = get_dprime(x, y)
+    x, y = normalize_variance(_x, _y)
+    dprime_pop_LDA, dprime_pop_NULL = get_dprime(x, y)
     dprime_ind = np.sqrt(get_dprime(x[:, 0], y[:, 0])**2 + get_dprime(x[:, 1], y[:, 1])**2)
-    ratio = np.log(dprime_pop / dprime_ind)
+    ratio_LDA = np.log(dprime_pop_LDA / dprime_ind)
+    ratio_NULL = np.log(dprime_pop_NULL / dprime_ind)
     noise = get_noise_PC(x, y)
     NULL = get_null_axis(x, y)
     LDA = get_LDA_axis(x, y)
@@ -135,4 +191,4 @@ def get_table_values(x, y):
     LDA_vs_noise = abs(np.dot(LDA, noise))
     rsc = get_rsc(x, y)
 
-    return [dprime_pop, dprime_ind, ratio, null_vs_noise, LDA_vs_noise, rsc]
+    return [dprime_pop_LDA, dprime_pop_NULL, dprime_ind, ratio_LDA, ratio_NULL, null_vs_noise, LDA_vs_noise, rsc]

@@ -1,5 +1,3 @@
-from random import random
-
 from bokeh.layouts import column, grid, row
 from bokeh.models import Button
 from bokeh.palettes import RdYlBu3
@@ -19,7 +17,7 @@ y = help.generate_data(u2, cov)
 
 # get the decoding axes and dprime values for this starting point
 values = np.round(help.get_table_values(x, y), 3)
-metrics = ['dprime_pop', 'dprime_ind', 'ratio', 'cos(NULL, Noise)',
+metrics = ['dprime_pop_LDA', 'dprime_pop_NULL', 'dprime_ind', 'ratio_LDA', 'ratio_NULL', 'cos(NULL, Noise)',
             'cos(LDA, Noise)', 'rsc']
 
 decoding_metrics = dict(metrics=metrics, values=values)
@@ -82,13 +80,18 @@ def update_table(x, y):
     source.data = {"metrics": metrics, "values": np.round(help.get_table_values(x, y), 3)}
 
 def update_axes(x, y):
-    NULL = help.get_null_axis(x, y)
-    LDA = help.get_LDA_axis(x, y)
-    noise = help.get_noise_PC(x, y)
+    x_norm, y_norm = help.normalize_variance(x, y)
+    NULL = help.get_null_axis(x_norm, y_norm)
+    LDA = help.get_LDA_axis(x_norm, y_norm)
+    print(np.dot(LDA, NULL))
+    noise = help.get_noise_PC(x_norm, y_norm)
 
     NULL_x = [x.mean(axis=0)[0], y.mean(axis=0)[0]]
     NULL_y = [x.mean(axis=0)[1], y.mean(axis=0)[1]]
+
     LDA *= (np.linalg.norm([[x.mean(axis=0)[0], y.mean(axis=0)[0]],
+                            [x.mean(axis=0)[1], y.mean(axis=0)[1]]])/2)
+    NULL *= (np.linalg.norm([[x.mean(axis=0)[0], y.mean(axis=0)[0]],
                             [x.mean(axis=0)[1], y.mean(axis=0)[1]]])/2)
     noise *= (np.linalg.norm([[x.mean(axis=0)[0], y.mean(axis=0)[0]],
                             [x.mean(axis=0)[1], y.mean(axis=0)[1]]])/2)
@@ -97,6 +100,9 @@ def update_axes(x, y):
     LDA_y = [uall[1]-LDA[1], uall[1]+LDA[1]]
     noise_x = [uall[0]-noise[0], uall[0]+noise[0]]
     noise_y = [uall[1]-noise[1], uall[1]+noise[1]]
+    NULL_x = [uall[0]-NULL[0], uall[0]+NULL[0]]
+    NULL_y = [uall[1]-NULL[1], uall[1]+NULL[1]]
+
     NULL_source.data = dict(x=NULL_x, y=NULL_y)
     LDA_source.data = dict(x=LDA_x, y=LDA_y)
     noise_source.data = dict(x=noise_x, y=noise_y)
