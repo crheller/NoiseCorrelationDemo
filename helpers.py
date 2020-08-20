@@ -114,7 +114,6 @@ def get_LDA_axis(x, y):
     return discrimination_axis
 
 
-'''
 def normalize_variance(x, y):
     """
     Normalize such that denominator of dprime calculation goes
@@ -138,7 +137,7 @@ def normalize_variance(x, y):
                     s2[:, n] = s2[:, n] / norm_factor
     
     return s1, s2
-
+'''
 def normalize_variance(x, y):
     """
     Normalize by the variance of each stimulus, for each neurons,
